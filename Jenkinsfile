@@ -55,8 +55,12 @@ pipeline {
                         NEW_IMAGE="$1"
                         VERSION="$2"
 
-                        OLD_IMAGE=$(docker inspect \
-                            --format='{{.Config.Image}}' cicd-app 2>/dev/null || true)
+                                                        docker run -d \
+                                    --name cicd-app \
+                                    --restart always \
+                                    -p 5000:5000 \
+                                    -e APP_VERSION="${OLD_VERSION:-1.0}" \
+                                    "$OLD_IMAGE"
 
                         docker pull "$NEW_IMAGE"
                         docker rm -f cicd-app 2>/dev/null || true
@@ -80,10 +84,11 @@ pipeline {
 
                             if [ -n "$OLD_IMAGE" ]; then
                                 docker run -d \
-                                    --name cicd-app \
-                                    --restart always \
-                                    -p 5000:5000 \
-                                    "$OLD_IMAGE"
+    --name cicd-app \
+    --restart always \
+    -p 5000:5000 \
+    -e APP_VERSION="${OLD_VERSION:-1.0}" \
+    "$OLD_IMAGE"
                                 echo "Rollback completed."
                             else
                                 echo "No previous image available."
