@@ -5,19 +5,22 @@ app = Flask(__name__)
 
 APP_VERSION = os.getenv("APP_VERSION", "1.0")
 
+
 @app.route("/")
 def home():
     return jsonify({
-        "message": "Version 2 - Automated CI/CD Deployment Successful!",
+        "message": "Automated CI/CD Deployment Successful!",
         "version": APP_VERSION
     })
+
 
 @app.route("/health")
 def health():
     return jsonify({
-        "status": "unhealthy",
+        "status": "healthy",
         "version": APP_VERSION
-    }), 500
+    }), 200
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
