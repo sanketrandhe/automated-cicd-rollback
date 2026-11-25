@@ -8,7 +8,7 @@ APP_VERSION = os.getenv("APP_VERSION", "1.0")
 @app.route("/")
 def home():
     return jsonify({
-        "message": "Automated CI/CD Deployment Successful!",
+        "message": "Version 2 - Automated CI/CD Deployment Successful!",
         "version": APP_VERSION
     })
 
