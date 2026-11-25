@@ -1,3 +1,4 @@
+
 pipeline {
     agent any
 
@@ -55,13 +56,18 @@ pipeline {
                         NEW_IMAGE="$1"
                         VERSION="$2"
 
-                                                        docker run -d \
-                                    --name cicd-app \
-                                    --restart always \
-                                    -p 5000:5000 \
-                                    -e APP_VERSION="${OLD_VERSION:-1.0}" \
-                                    "$OLD_IMAGE"
+                        # Capture previous image and application version
+                        OLD_IMAGE=$(docker inspect \
+                            --format='{{.Config.Image}}' cicd-app 2>/dev/null || true)
 
+                        OLD_VERSION=$(docker inspect \
+                            --format='{{range .Config.Env}}{{println .}}{{end}}' cicd-app 2>/dev/null \
+                            | grep '^APP_VERSION=' | cut -d= -f2- || true)
+
+                        echo "Previous image: $OLD_IMAGE"
+                        echo "Previous version: $OLD_VERSION"
+
+                        # Pull and deploy new image
                         docker pull "$NEW_IMAGE"
                         docker rm -f cicd-app 2>/dev/null || true
 
@@ -74,6 +80,7 @@ pipeline {
 
                         sleep 5
 
+                        # Verify application health
                         if curl -fsS http://localhost:5000/health; then
                             echo "Deployment successful!"
                         else
@@ -84,11 +91,12 @@ pipeline {
 
                             if [ -n "$OLD_IMAGE" ]; then
                                 docker run -d \
-    --name cicd-app \
-    --restart always \
-    -p 5000:5000 \
-    -e APP_VERSION="${OLD_VERSION:-1.0}" \
-    "$OLD_IMAGE"
+                                    --name cicd-app \
+                                    --restart always \
+                                    -p 5000:5000 \
+                                    -e APP_VERSION="${OLD_VERSION:-1.0}" \
+                                    "$OLD_IMAGE"
+
                                 echo "Rollback completed."
                             else
                                 echo "No previous image available."
